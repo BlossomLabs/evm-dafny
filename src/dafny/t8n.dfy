@@ -13,7 +13,7 @@
  */
 
 include "evm.dfy"
-include "core/precompiled.dfy"
+include "core/precompiled-crypto.dfy"
 
  module t8n {
     import Storage
@@ -90,7 +90,7 @@ include "core/precompiled.dfy"
 
         var depth := 0;
 
-        var st := EvmState.Call(worldState, transient, context, EvmFork.BERLIN, Precompiled.DEFAULT, substate, recipient, callValue, gasAvailable, depth);
+        var st := EvmState.Call(worldState, transient, context, EvmFork.BERLIN, PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0), substate, recipient, callValue, gasAvailable, depth);
 
         MessageCall(sender, origin, recipient, callValue, callData, writePermission, gasPrice, blockInfo, accounts, gasAvailable);
 
@@ -120,7 +120,7 @@ include "core/precompiled.dfy"
         ss := ss.AccountAccessed(sender);
         ss := ss.AccountAccessed(recipient);
         ws := ws.IncNonce(sender);
-        var st := EvmState.Call(ws, transient, ctx, EvmFork.BERLIN, Precompiled.DEFAULT, ss, recipient, callValue, gas, 1);
+        var st := EvmState.Call(ws, transient, ctx, EvmFork.BERLIN, PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0), ss, recipient, callValue, gas, 1);
         st := Run(0, st);
         if st.RETURNS? {
 
