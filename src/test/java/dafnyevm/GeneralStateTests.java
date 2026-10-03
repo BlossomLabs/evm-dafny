@@ -339,9 +339,8 @@ public class GeneralStateTests {
             try {
                 return streamTestsFromFile(f);
             } catch (Throwable e) {
-                System.out.println("*** Error reading file \"" + f + "\" (" + e.getMessage() + ")");
-                e.printStackTrace();
-                return null;
+                // A missing fixture is a failed test run, never an empty stream.
+                throw new AssertionError("Failed to load pinned fixture " + f, e);
             }
         });
     }

@@ -14,10 +14,13 @@
 package dafnyevm;
 
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.Hash;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -26,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import dafnyevm.DafnyEvm.BlockInfo;
 import dafnyevm.DafnyEvm.State;
@@ -37,6 +41,13 @@ import evmtools.core.Transaction;
 import static evmtools.util.Bytecodes.*;
 
 public class Tests {
+    @Test
+    public void fixtureLoadFailureIsFatal(@TempDir Path directory) throws Exception {
+        Files.writeString(directory.resolve("malformed.json"), "{");
+        assertThrows(AssertionError.class,
+                () -> GeneralStateTests.readTestFiles(directory).count());
+    }
+
     /**
      * Default receiver to use for a call (unless otherwise specified).
      */
