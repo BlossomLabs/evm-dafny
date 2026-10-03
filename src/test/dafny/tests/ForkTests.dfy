@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 /*
  * Copyright 2022 ConsenSys Software Inc.
  *
@@ -16,29 +17,29 @@ include "../../../dafny/evm.dfy"
 include "../utils.dfy"
 
 module ForkTests {
-    import opened Int
-    import opened Bytecode
-    import opened EVM
-    import opened EvmState
-    import opened Opcode
-    import Stack
-    import opened Utils
+  import opened Int
+  import opened Bytecode
+  import opened EVM
+  import opened EvmState
+  import opened Opcode
+  import Stack
+  import opened Utils
 
-    method {:test} berlin_01()
-    {
-        var vm := EVM.Init(0, EvmFork.BERLIN, code:=[BASEFEE]);
-        EvmFork.BerlinFacts();
-        AssertAndExpect(BASEFEE !in EvmFork.BERLIN_BYTECODES);
-        vm := EVM.Execute(vm);
-        assert vm == ERROR(INVALID_OPCODE);
-    }
+  method {:test} berlin_01()
+  {
+    var vm := EVM.Init(0, EvmFork.BERLIN, code:=[BASEFEE], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
+    EvmFork.BerlinFacts();
+    AssertAndExpect(BASEFEE !in EvmFork.BERLIN_BYTECODES);
+    vm := EVM.Execute(vm);
+    assert vm == ERROR(INVALID_OPCODE);
+  }
 
-    method {:test} london_01()
-    {
-        var vm := EVM.Init(0, EvmFork.LONDON, code:=[BASEFEE]);
-        EvmFork.LondonFacts();
-        AssertAndExpect(BASEFEE in EvmFork.LONDON_BYTECODES);
-        vm := EVM.Execute(vm);
-        assert vm != ERROR(INVALID_OPCODE);
-    }
+  method {:test} london_01()
+  {
+    var vm := EVM.Init(0, EvmFork.LONDON, code:=[BASEFEE], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
+    EvmFork.LondonFacts();
+    AssertAndExpect(BASEFEE in EvmFork.LONDON_BYTECODES);
+    vm := EVM.Execute(vm);
+    assert vm != ERROR(INVALID_OPCODE);
+  }
 }

@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 // The following presents a simulation proof that two sequences of bytecode are
 // semantically equivalent.  The two sequences were both generated from the
 // following Yul code:
@@ -27,56 +28,56 @@ const OPT_CODE := [PUSH1,0x01,PUSH1,0x00,SLOAD,ADD,DUP1,ISZERO,PUSH1,0x0f,JUMPI,
 // cannot use full equality because we expect some differences (e.g. the PC
 // maybe at a different point, and the code itself will differ, etc).
 function equiv(l: State, r: State) : bool {
-    if l.EXECUTING? && r.EXECUTING?
+  if l.EXECUTING? && r.EXECUTING?
+  then
+    l.evm.memory == r.evm.memory &&
+    l.evm.world == r.evm.world &&
+    l.evm.context == r.evm.context &&
+    l.evm.substate == r.evm.substate
+  else if l.RETURNS? && r.RETURNS?
     then
-        l.evm.memory == r.evm.memory &&
-        l.evm.world == r.evm.world &&
-        l.evm.context == r.evm.context &&
-        l.evm.substate == r.evm.substate
-    else if l.RETURNS? && r.RETURNS?
-    then
-        l.data == r.data && l.world == r.world
+      l.data == r.data && l.world == r.world
     else if l.ERROR? && r.ERROR?
-    then
+      then
         l.data == r.data
-    else
+      else
         false
 }
 
 method {:verify false} proof(context: Context.T, world: map<u160,WorldState.Account>, gas: nat)
-requires context.writePermission
-requires gas > 100000
-requires context.address in world {
-    var storage := world[context.address].storage;
-    var x := Storage.Read(storage,0) as nat;
-    var st1 := EVM.Create(EvmFork.BERLIN,context,world,gas,UNOPT_CODE);
-    var st2 := EVM.Create(EvmFork.BERLIN,context,world,gas,OPT_CODE);
+  requires context.writePermission
+  requires gas > 100000
+  requires context.address in world {
+  var storage := world[context.address].storage;
+  var x := Storage.Read(storage,0) as nat;
+  var st1 := EVM.Create(EvmFork.BERLIN,context,world,gas,UNOPT_CODE, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
+  var st2 := EVM.Create(EvmFork.BERLIN,context,world,gas,OPT_CODE, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
+  //
+  st1 := ExecuteN(st1,7); // PUSH1 0x01,PUSH1 0x00,SLOAD,ADD,PUSH1 0x00,DUP2,SUB
+  st2 := ExecuteN(st2,6); // PUSH1 0x01,PUSH1 0x00,SLOAD,ADD,DUP1,ISZERO
+  assert (st1.Peek(0) as nat) == (x+1) % TWO_256;
+  //
+  st1 := ExecuteN(st1,2); // PUSH1 0x11, JUMPI
+  st2 := ExecuteN(st2,2); // PUSH1 0xf, JUMPI
+  //
+  if (x+1) == TWO_256 {
+    assert st1.EXECUTING? && st1.PC() == 0xd;
+    assert st2.EXECUTING? && st2.PC() == 0xf;
+    st1 := ExecuteN(st1,3);
+    st2 := ExecuteN(st2,4);
+    assert st1.IsRevert();
+    assert equiv(st1,st2);
+  } else {
+    assert st1.PC() == 0x11;
+    assert st2.PC() == 0xb;
+    st1 := ExecuteN(st1,4); // JUMPDEST, DUP1, PUSH1 0x00, SSTORE
+    st2 := ExecuteN(st2,2); // PUSH1 0x00, SSTORE
+    assert st1.Load(0) == (x+1) as u256;
+    assert st2.Load(0) == (x+1) as u256;
     //
-    st1 := ExecuteN(st1,7); // PUSH1 0x01,PUSH1 0x00,SLOAD,ADD,PUSH1 0x00,DUP2,SUB
-    st2 := ExecuteN(st2,6); // PUSH1 0x01,PUSH1 0x00,SLOAD,ADD,DUP1,ISZERO
-    assert (st1.Peek(0) as nat) == (x+1) % TWO_256;
-    //
-    st1 := ExecuteN(st1,2); // PUSH1 0x11, JUMPI
-    st2 := ExecuteN(st2,2); // PUSH1 0xf, JUMPI
-    //
-    if (x+1) == TWO_256 {
-        assert st1.EXECUTING? && st1.PC() == 0xd;
-        assert st2.EXECUTING? && st2.PC() == 0xf;
-        st1 := ExecuteN(st1,3);
-        st2 := ExecuteN(st2,4);
-        assert st1.IsRevert();
-        assert equiv(st1,st2);
-    } else {
-        assert st1.PC() == 0x11;
-        assert st2.PC() == 0xb;
-        st1 := ExecuteN(st1,4); // JUMPDEST, DUP1, PUSH1 0x00, SSTORE
-        st2 := ExecuteN(st2,2); // PUSH1 0x00, SSTORE
-        assert st1.Load(0) == (x+1) as u256;
-        assert st2.Load(0) == (x+1) as u256;
-        //
-        st1 := Execute(st1); // STOP
-        st2 := Execute(st2); // STOP
-        assert st1.RETURNS? && st2.RETURNS?;
-        assert equiv(st1,st2);
-    }
+    st1 := Execute(st1); // STOP
+    st2 := Execute(st2); // STOP
+    assert st1.RETURNS? && st2.RETURNS?;
+    assert equiv(st1,st2);
+  }
 }
