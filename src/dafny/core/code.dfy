@@ -26,24 +26,24 @@ module Code {
   const MAX_CODE_SIZE := 24576
 
   /**
-   * A code segment is just a sequence of words which form the
-   * opcodes and operands of the machine instructions.
-   */
+    * A code segment is just a sequence of words which form the
+    * opcodes and operands of the machine instructions.
+    */
   datatype Raw = Code(contents:seq<u8>)
 
   type T = c:Raw | |c.contents| <= MAX_CODE_SIZE witness Code([])
 
   /**
-   * Create a code segment from an initial sequence of words.
-   */
+    * Create a code segment from an initial sequence of words.
+    */
   function Create(contents:seq<u8>) : T
     requires |contents| <= MAX_CODE_SIZE {
-        Code(contents:=contents)
+    Code(contents:=contents)
   }
 
   /**
-   * Get the size of this code segment.
-   */
+    * Get the size of this code segment.
+    */
   function Size(c:T) : u256 { |c.contents| as u256 }
 
   function DecodeUint8(c:T, address:nat) : u8 {
@@ -53,7 +53,7 @@ module Code {
   }
 
   function CodeAt(c: T, index: nat): u8
-  requires 0 <= index < Size(c) as nat {
+    requires 0 <= index < Size(c) as nat {
     c.contents[index]
   }
 
@@ -70,10 +70,10 @@ module Code {
   }
 
   /**
-   * Slice out a subsequence of bytes from a given sequence.
-   * If the requested subsequence overflows available memory,
-   * it is padded out with zeros.
-   */
+    * Slice out a subsequence of bytes from a given sequence.
+    * If the requested subsequence overflows available memory,
+    * it is padded out with zeros.
+    */
   function Slice(c:T, address:nat, len:nat) : seq<u8> {
     Arrays.SliceAndPad(c.contents,address,len,0)
   }

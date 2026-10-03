@@ -16,145 +16,145 @@ include "../opcodes.dfy"
 include "../util/int.dfy"
 
 module EvmFork {
-    import opened Int
-    import opened Opcode
-    import opened Optional
+  import opened Int
+  import opened Opcode
+  import opened Optional
 
-    const GENISIS_BYTECODES : set<u8> :=
-      {STOP,ADD,MUL,SUB,DIV,SDIV,MOD,SMOD}
-      + {ADDMOD,MULMOD,EXP,SIGNEXTEND,LT,GT,SLT,SGT}
-      + {EQ,ISZERO,AND,OR,XOR,NOT,BYTE,SHL}
-      + {SHR,SAR,KECCAK256,ADDRESS,BALANCE,ORIGIN,CALLER,CALLVALUE}
-      + {CALLDATALOAD,CALLDATASIZE,CALLDATACOPY,CODESIZE,CODECOPY,GASPRICE,EXTCODESIZE,EXTCODECOPY}
-      + {RETURNDATASIZE,RETURNDATACOPY,EXTCODEHASH,BLOCKHASH,COINBASE,TIMESTAMP,NUMBER,DIFFICULTY}
-      + {GASLIMIT,CHAINID,SELFBALANCE,POP,MLOAD,MSTORE,MSTORE8,SLOAD}
-      + {SSTORE,JUMP,JUMPI,PC,MSIZE,GAS,JUMPDEST,PUSH1}
-      + {PUSH2,PUSH3,PUSH4,PUSH5,PUSH6,PUSH7,PUSH8,PUSH9}
-      + {PUSH10,PUSH11,PUSH12,PUSH13,PUSH14,PUSH15,PUSH16,PUSH17}
-      + {PUSH18,PUSH19,PUSH20,PUSH21,PUSH22,PUSH23,PUSH24,PUSH25}
-      + {PUSH26,PUSH27,PUSH28,PUSH29,PUSH30,PUSH31,PUSH32,DUP1}
-      + {DUP2,DUP3,DUP4,DUP5,DUP6,DUP7,DUP8,DUP9}
-      + {DUP10,DUP11,DUP12,DUP13,DUP14,DUP15,DUP16,SWAP1}
-      + {SWAP2,SWAP3,SWAP4,SWAP5,SWAP6,SWAP7,SWAP8,SWAP9}
-      + {SWAP10,SWAP11,SWAP12,SWAP13,SWAP14,SWAP15,SWAP16,LOG0}
-      + {LOG1,LOG2,LOG3,LOG4,EOF,CREATE,CALL,CALLCODE}
-      + {RETURN,DELEGATECALL,CREATE2,STATICCALL,REVERT,INVALID,SELFDESTRUCT}
+  const GENISIS_BYTECODES : set<u8> :=
+    {STOP,ADD,MUL,SUB,DIV,SDIV,MOD,SMOD}
+    + {ADDMOD,MULMOD,EXP,SIGNEXTEND,LT,GT,SLT,SGT}
+    + {EQ,ISZERO,AND,OR,XOR,NOT,BYTE,SHL}
+    + {SHR,SAR,KECCAK256,ADDRESS,BALANCE,ORIGIN,CALLER,CALLVALUE}
+    + {CALLDATALOAD,CALLDATASIZE,CALLDATACOPY,CODESIZE,CODECOPY,GASPRICE,EXTCODESIZE,EXTCODECOPY}
+    + {RETURNDATASIZE,RETURNDATACOPY,EXTCODEHASH,BLOCKHASH,COINBASE,TIMESTAMP,NUMBER,DIFFICULTY}
+    + {GASLIMIT,CHAINID,SELFBALANCE,POP,MLOAD,MSTORE,MSTORE8,SLOAD}
+    + {SSTORE,JUMP,JUMPI,PC,MSIZE,GAS,JUMPDEST,PUSH1}
+    + {PUSH2,PUSH3,PUSH4,PUSH5,PUSH6,PUSH7,PUSH8,PUSH9}
+    + {PUSH10,PUSH11,PUSH12,PUSH13,PUSH14,PUSH15,PUSH16,PUSH17}
+    + {PUSH18,PUSH19,PUSH20,PUSH21,PUSH22,PUSH23,PUSH24,PUSH25}
+    + {PUSH26,PUSH27,PUSH28,PUSH29,PUSH30,PUSH31,PUSH32,DUP1}
+    + {DUP2,DUP3,DUP4,DUP5,DUP6,DUP7,DUP8,DUP9}
+    + {DUP10,DUP11,DUP12,DUP13,DUP14,DUP15,DUP16,SWAP1}
+    + {SWAP2,SWAP3,SWAP4,SWAP5,SWAP6,SWAP7,SWAP8,SWAP9}
+    + {SWAP10,SWAP11,SWAP12,SWAP13,SWAP14,SWAP15,SWAP16,LOG0}
+    + {LOG1,LOG2,LOG3,LOG4,EOF,CREATE,CALL,CALLCODE}
+    + {RETURN,DELEGATECALL,CREATE2,STATICCALL,REVERT,INVALID,SELFDESTRUCT}
 
-    // ===================================================================
-    // EIPS
-    // ===================================================================
+  // ===================================================================
+  // EIPS
+  // ===================================================================
 
-    // An EIP consists of an identifying number, and a description.
-    type EIP = (nat,string)
+  // An EIP consists of an identifying number, and a description.
+  type EIP = (nat,string)
 
-    function EipDescription(eip: nat) : Option<string> {
-        match eip
-        case 1153 => Some("Transient storage opcodes")
-        case 1559 => Some("Fee market change for ETH 1.0 chain")
-        case 2565 => Some("ModExp Gas Cost")
-        case 2929 => Some("Gas cost increases for state access opcodes")
-        case 2718 => Some("Typed Transaction Envelope")
-        case 2930 => Some("Optional access lists")
-        case 3198 => Some("BASEFEE opcode")
-        case 3529 => Some("Reduction in refunds")
-        case 3541 => Some("Reject new contract code starting with the 0xEF byte")
-        case 3554 => Some("Difficulty Bomb Delay to December 2021")
-        case 3651 => Some("Warm COINBASE")
-        case 3675 => Some("Upgrade consensus to Proof-of-Stake")
-        case 3855 => Some("PUSH0 instruction")
-        case 3860 => Some("Limit and meter initcode")
-        case 4345 => Some("Difficulty Bomb Delay to June 2022")
-        case 4399 => Some("Supplant DIFFICULTY opcode with PREVRANDAO")
-        case 4895 => Some("Beacon chain push withdrawals as operations")
-        case 5133 => Some("Delaying Difficulty Bomb to mid-September 2022")
-        case 5656 => Some("MCOPY - Memory copying instruction")
-        case _ => None
+  function EipDescription(eip: nat) : Option<string> {
+    match eip
+    case 1153 => Some("Transient storage opcodes")
+    case 1559 => Some("Fee market change for ETH 1.0 chain")
+    case 2565 => Some("ModExp Gas Cost")
+    case 2929 => Some("Gas cost increases for state access opcodes")
+    case 2718 => Some("Typed Transaction Envelope")
+    case 2930 => Some("Optional access lists")
+    case 3198 => Some("BASEFEE opcode")
+    case 3529 => Some("Reduction in refunds")
+    case 3541 => Some("Reject new contract code starting with the 0xEF byte")
+    case 3554 => Some("Difficulty Bomb Delay to December 2021")
+    case 3651 => Some("Warm COINBASE")
+    case 3675 => Some("Upgrade consensus to Proof-of-Stake")
+    case 3855 => Some("PUSH0 instruction")
+    case 3860 => Some("Limit and meter initcode")
+    case 4345 => Some("Difficulty Bomb Delay to June 2022")
+    case 4399 => Some("Supplant DIFFICULTY opcode with PREVRANDAO")
+    case 4895 => Some("Beacon chain push withdrawals as operations")
+    case 5133 => Some("Delaying Difficulty Bomb to mid-September 2022")
+    case 5656 => Some("MCOPY - Memory copying instruction")
+    case _ => None
+  }
+
+  // Updates the set of active bytecodes based on the effect of a sequence of
+  // given eips.  Observe that EIPs are applied in order of occurrence.
+  function EipBytecodes(eips: seq<nat>, bytecodes: set<u8>) : set<u8> {
+    if |eips| == 0 then bytecodes
+    else
+      match eips[0]
+      case 1153 => EipBytecodes(eips[1..], bytecodes + {TLOAD,TSTORE})
+      case 3198 => EipBytecodes(eips[1..], bytecodes + {BASEFEE})
+      case 3855 => EipBytecodes(eips[1..], bytecodes + {PUSH0})
+      case 5656 => EipBytecodes(eips[1..], bytecodes + {MCOPY})
+      case _ => EipBytecodes(eips[1..], bytecodes)
+  }
+
+  // ===================================================================
+  // Forks
+  // ===================================================================
+
+  const BERLIN_EIPS : seq<nat> := [2565,2929,2718,2930]
+  const LONDON_EIPS : seq<nat> := BERLIN_EIPS + [1559,3198,3529,3541,3554]
+  const SHANGHAI_EIPS : seq<nat> := LONDON_EIPS + [3651,3855,3860,4895]
+  const CANCUN_EIPS : seq<nat> := SHANGHAI_EIPS + [1153,5656]
+
+  const BERLIN_BYTECODES : set<u8> := EipBytecodes(BERLIN_EIPS,GENISIS_BYTECODES)
+  const LONDON_BYTECODES : set<u8> := EipBytecodes(LONDON_EIPS,GENISIS_BYTECODES)
+  const SHANGHAI_BYTECODES : set<u8> := EipBytecodes(SHANGHAI_EIPS,GENISIS_BYTECODES)
+  const CANCUN_BYTECODES : set<u8> := EipBytecodes(CANCUN_EIPS,GENISIS_BYTECODES)
+
+  const BERLIN : Fork := Instance(2021_04_15, BERLIN_EIPS, BERLIN_BYTECODES)
+  const LONDON : Fork := Instance(2021_08_05, LONDON_EIPS, LONDON_BYTECODES)
+  const SHANGHAI : Fork := Instance(2023_04_12, SHANGHAI_EIPS, SHANGHAI_BYTECODES)
+  const CANCUN : Fork := Instance(2024_03_12, CANCUN_EIPS, CANCUN_BYTECODES)
+
+  // A fork is either the _root_ (i.e. genisis EVM), or an _instance_ which
+  // refines another fork.
+  datatype Fork = Instance(id: nat, eips: seq<nat>, bytecodes: set<u8>) {
+    // Determine whether or not a given EIP is active in this fork.
+    predicate IsActive(eip: nat) { eip in this.eips }
+
+    // Determine whether or not a given bytecode is active in this fork.
+    // For example, BASEFEE is not active in (or before) Berlin but is
+    // active in (and after) London.
+    predicate IsBytecode(opcode: u8) { opcode in bytecodes }
+  }
+
+  // ===================================================================
+  // Lemmas
+  // ===================================================================
+
+  lemma EipSet(eips: seq<nat>, codes: set<u8>)
+    ensures EipBytecodes(eips,codes) == codes
+                                        + (if 1153 in eips then {TLOAD,TSTORE} else {})
+                                        + (if 3198 in eips then {BASEFEE} else {})
+                                        + (if 3855 in eips then {PUSH0} else {})
+                                        + (if 5656 in eips then {MCOPY} else {})
+  {
+    if |eips| > 0 {
+      match eips[0]
+      case 1153 => EipSet(eips[1..],codes+{TLOAD,TSTORE});
+      case 3198 => EipSet(eips[1..],codes+{BASEFEE});
+      case 3855 => EipSet(eips[1..],codes+{PUSH0});
+      case 5656 => EipSet(eips[1..],codes+{MCOPY});
+      case _ => EipSet(eips[1..],codes);
     }
+  }
 
-    // Updates the set of active bytecodes based on the effect of a sequence of
-    // given eips.  Observe that EIPs are applied in order of occurrence.
-    function EipBytecodes(eips: seq<nat>, bytecodes: set<u8>) : set<u8> {
-        if |eips| == 0 then bytecodes
-        else
-            match eips[0]
-            case 1153 => EipBytecodes(eips[1..], bytecodes + {TLOAD,TSTORE})
-            case 3198 => EipBytecodes(eips[1..], bytecodes + {BASEFEE})
-            case 3855 => EipBytecodes(eips[1..], bytecodes + {PUSH0})
-            case 5656 => EipBytecodes(eips[1..], bytecodes + {MCOPY})
-            case _ => EipBytecodes(eips[1..], bytecodes)
-    }
-
-    // ===================================================================
-    // Forks
-    // ===================================================================
-
-    const BERLIN_EIPS : seq<nat> := [2565,2929,2718,2930]
-    const LONDON_EIPS : seq<nat> := BERLIN_EIPS + [1559,3198,3529,3541,3554]
-    const SHANGHAI_EIPS : seq<nat> := LONDON_EIPS + [3651,3855,3860,4895]      
-    const CANCUN_EIPS : seq<nat> := SHANGHAI_EIPS + [1153,5656]      
-
-    const BERLIN_BYTECODES : set<u8> := EipBytecodes(BERLIN_EIPS,GENISIS_BYTECODES)
-    const LONDON_BYTECODES : set<u8> := EipBytecodes(LONDON_EIPS,GENISIS_BYTECODES)
-    const SHANGHAI_BYTECODES : set<u8> := EipBytecodes(SHANGHAI_EIPS,GENISIS_BYTECODES)      
-    const CANCUN_BYTECODES : set<u8> := EipBytecodes(CANCUN_EIPS,GENISIS_BYTECODES)      
-
-    const BERLIN : Fork := Instance(2021_04_15, BERLIN_EIPS, BERLIN_BYTECODES)
-    const LONDON : Fork := Instance(2021_08_05, LONDON_EIPS, LONDON_BYTECODES)
-    const SHANGHAI : Fork := Instance(2023_04_12, SHANGHAI_EIPS, SHANGHAI_BYTECODES)      
-    const CANCUN : Fork := Instance(2024_03_12, CANCUN_EIPS, CANCUN_BYTECODES)      
-
-    // A fork is either the _root_ (i.e. genisis EVM), or an _instance_ which
-    // refines another fork.
-    datatype Fork = Instance(id: nat, eips: seq<nat>, bytecodes: set<u8>) {
-        // Determine whether or not a given EIP is active in this fork.
-        predicate IsActive(eip: nat) { eip in this.eips }
-
-        // Determine whether or not a given bytecode is active in this fork.
-        // For example, BASEFEE is not active in (or before) Berlin but is
-        // active in (and after) London.
-        predicate IsBytecode(opcode: u8) { opcode in bytecodes }
-    }
-
-    // ===================================================================
-    // Lemmas
-    // ===================================================================
-
-    lemma EipSet(eips: seq<nat>, codes: set<u8>)
-      ensures EipBytecodes(eips,codes) == codes
-        + (if 1153 in eips then {TLOAD,TSTORE} else {})
-        + (if 3198 in eips then {BASEFEE} else {})
-        + (if 3855 in eips then {PUSH0} else {})
-        + (if 5656 in eips then {MCOPY} else {})
-    {
-      if |eips| > 0 {
-        match eips[0]
-        case 1153 => EipSet(eips[1..],codes+{TLOAD,TSTORE});
-        case 3198 => EipSet(eips[1..],codes+{BASEFEE});
-        case 3855 => EipSet(eips[1..],codes+{PUSH0});
-        case 5656 => EipSet(eips[1..],codes+{MCOPY});
-        case _ => EipSet(eips[1..],codes);
-      }
-    }
-
-    lemma BerlinFacts()
+  lemma BerlinFacts()
     ensures BASEFEE !in BERLIN_BYTECODES
-    { EipSet(BERLIN_EIPS,GENISIS_BYTECODES); }
+  { EipSet(BERLIN_EIPS,GENISIS_BYTECODES); }
 
-    lemma LondonFacts()
+  lemma LondonFacts()
     ensures BASEFEE in LONDON_BYTECODES
-    {
-        EipSet(LONDON_EIPS,GENISIS_BYTECODES);
-    }
+  {
+    EipSet(LONDON_EIPS,GENISIS_BYTECODES);
+  }
 
-    lemma ShanghaiFacts()
-      ensures {PUSH0,BASEFEE} <= SHANGHAI_BYTECODES
-    {
-        EipSet(SHANGHAI_EIPS,GENISIS_BYTECODES);
-    }    
+  lemma ShanghaiFacts()
+    ensures {PUSH0,BASEFEE} <= SHANGHAI_BYTECODES
+  {
+    EipSet(SHANGHAI_EIPS,GENISIS_BYTECODES);
+  }
 
-    lemma CancunFacts()
-      ensures {MCOPY,TLOAD,TSTORE} <= CANCUN_BYTECODES
-    {
-        EipSet(CANCUN_EIPS,GENISIS_BYTECODES);
-    } 
+  lemma CancunFacts()
+    ensures {MCOPY,TLOAD,TSTORE} <= CANCUN_BYTECODES
+  {
+    EipSet(CANCUN_EIPS,GENISIS_BYTECODES);
+  }
 }

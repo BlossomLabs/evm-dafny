@@ -14,40 +14,40 @@
 include "../util/int.dfy"
 
 /**
- * Storage on the EVM is a word-addressable (non-volatile) random access memory.
- */
+  * Storage on the EVM is a word-addressable (non-volatile) random access memory.
+  */
 module Storage {
-    import opened Int
+  import opened Int
 
-    // =============================================================================
-    // Random Access Memory
-    // =============================================================================
+  // =============================================================================
+  // Random Access Memory
+  // =============================================================================
 
-    datatype T = Storage(contents:map<u256,u256>)
+  datatype T = Storage(contents:map<u256,u256>)
 
-    /**
-     * Create some storage from an initial sequence of words.
-     */
-    function Create(contents:map<u256,u256>) : T {
-        Storage(contents:=contents)
-    }
+  /**
+    * Create some storage from an initial sequence of words.
+    */
+  function Create(contents:map<u256,u256>) : T {
+    Storage(contents:=contents)
+  }
 
-    /**
-     * Read the value at a given address in Storage.  If the given location
-     * has not been initialised, then zero is returned as default.
-     */
-    function Read(mem:T, address:u256) : u256 {
-      if address in mem.contents
-        then
-        mem.contents[address]
-      else
-        0
-    }
+  /**
+    * Read the value at a given address in Storage.  If the given location
+    * has not been initialised, then zero is returned as default.
+    */
+  function Read(mem:T, address:u256) : u256 {
+    if address in mem.contents
+    then
+      mem.contents[address]
+    else
+      0
+  }
 
-    /**
-     * Write a value to a given address in Storage.
-     */
-    function Write(mem:T, address:u256, val:u256) : T {
-        Storage(contents:=mem.contents[address:=val])
-    }
+  /**
+    * Write a value to a given address in Storage.
+    */
+  function Write(mem:T, address:u256, val:u256) : T {
+    Storage(contents:=mem.contents[address:=val])
+  }
 }

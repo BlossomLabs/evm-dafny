@@ -15,34 +15,34 @@ include "../util/int.dfy"
 include "storage.dfy"
 
 /**
- * Storage on the EVM which is associated with a particular contract address.
- */
+  * Storage on the EVM which is associated with a particular contract address.
+  */
 module TransientStorage {
   import opened Int
   import Storage
 
   datatype T = TransientStorage(contents:map<u160,Storage.T>) {
-   /**
-    * Write into the transient storage of a given account.
-    */
+    /**
+      * Write into the transient storage of a given account.
+      */
     function Write(account:u160, address: u256, value: u256) : T {
-      // Extract account data          
+      // Extract account data
       var entry := if account in this.contents
-      then
-        // Transient storage already exists for this account
-        this.contents[account]
-      else 
-        // Fresh transient storage.
-        Storage.Create(map[]);
-        // Update account storage
+                   then
+                     // Transient storage already exists for this account
+                     this.contents[account]
+                   else
+                     // Fresh transient storage.
+                     Storage.Create(map[]);
+      // Update account storage
       var nStorage := Storage.Write(entry,address,value);
       // Write it all back
       TransientStorage(this.contents[account:=nStorage])
     }
 
-   /**
-    * Read a value from the transient storage of a given account.
-    */
+    /**
+      * Read a value from the transient storage of a given account.
+      */
     function Read(account:u160, address: u256) : u256
     {
       if account in this.contents
@@ -57,8 +57,8 @@ module TransientStorage {
   }
 
   /**
-   * Default empty storage
-   */
+    * Default empty storage
+    */
   function Create() : T {
     TransientStorage(map[])
   }
