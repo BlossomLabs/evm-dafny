@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 /*
  * Copyright 2022 ConsenSys Software Inc.
  *
@@ -138,7 +139,7 @@ module Test10Gas {
         requires g >= 2*G_VERYLOW + c as nat * (7*G_VERYLOW + G_BASE) + G_BASE
     {
         // Initialise VM
-        var vm := EVM.Init(g);
+        var vm := EVM.Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         ghost var count: u8 := 0;
 
         vm := Push1(vm, 0).UseGas(G_VERYLOW); //  [0]

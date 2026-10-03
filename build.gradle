@@ -133,7 +133,7 @@ task compileDafny {
         // Generate Dafny Source
         exec {
             executable DAFNY_EXE
-            args DAFNY4_BUILD_FLAGS + ['src/dafny/evm.dfy']
+            args DAFNY4_BUILD_FLAGS + ['src/dafny/evm.dfy','src/dafny/core/precompiled-crypto.dfy']
         }
     }
 }

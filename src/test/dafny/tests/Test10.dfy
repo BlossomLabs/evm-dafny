@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 /*
  * Copyright 2022 ConsenSys Software Inc.
  *
@@ -37,7 +38,7 @@ module Test10 {
     method {:test} main1()
     {
         // Initialise VM
-        var vm := EVM.Init(0);
+        var vm := EVM.Init(0, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         var a: u8 := 0x01;
         var b: u8 := 0x02;
@@ -62,7 +63,7 @@ module Test10 {
     method  main2(c: u8)
     {
         // Initialise VM
-        var vm := EVM.Init(0);
+        var vm := EVM.Init(0, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         var a: u8 := 0x01;
         var b : u8 := 0x02;
@@ -95,7 +96,7 @@ module Test10 {
         var b : u8 := 0x02;
 
         // Initialise VM
-        var vm := EVM.Init(0);
+        var vm := EVM.Init(0, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         vm := Push1(vm, c);
         ghost var g := vm.GetStack();
@@ -132,7 +133,7 @@ module Test10 {
     method main4a(c: u8)
     {
         // Initialise VM
-        var vm := EVM.Init(0);
+        var vm := EVM.Init(0, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         var count: u8 := c;
 
@@ -172,7 +173,7 @@ module Test10 {
     method main4aa(c: u8)
     {
         // Initialise VM
-        var vm := EVM.Init(0);
+        var vm := EVM.Init(0, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         ghost var count: u8 := 0;
 
         vm := Push1(vm, 0); //  [0]
@@ -222,7 +223,7 @@ module Test10 {
     method main5(c: u8)
     {
         // Initialise VM
-        var vm := EVM.Init(0);
+        var vm := EVM.Init(0, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         var a: u8 := 0x01;
         var b : u8 := 0x02;
