@@ -20,11 +20,10 @@ jobs:
           java-version: 21
           distribution: temurin
           cache: 'gradle'        
-      - uses: dafny-lang/setup-dafny-action@f2a62432e820c6b0519d308c440b88d7eee411e4
-        with:
-          dafny-version: "4.11.0"
+      - name: Restore pinned Dafny
+        run: python3 tools/bootstrap.py
       - name: Set DAFNY_HOME
-        run: echo "DAFNY_HOME=$(dirname $(which dafny))" >> $GITHUB_ENV
+        run: echo "DAFNY_HOME=$GITHUB_WORKSPACE/.tools/dafny" >> $GITHUB_ENV
         # Build
       - name: Gradle Build
         run: ./gradlew --no-daemon build -Prandomize=5
