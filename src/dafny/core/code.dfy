@@ -57,6 +57,18 @@ module Code {
     c.contents[index]
   }
 
+  // PUSH immediate bytes are data, even when their value is JUMPDEST.
+  function {:tailrecursion true} IsInstructionStart(c:T, cursor:nat, target:nat):bool
+    decreases if cursor < |c.contents| then |c.contents|-cursor else 0
+  {
+    if cursor >= |c.contents| || cursor > target then false
+    else if cursor == target then true
+    else
+      var opcode := c.contents[cursor];
+      var immediate := if 0x60 <= opcode <= 0x7f then (opcode as nat)-0x5f else 0;
+      IsInstructionStart(c,cursor+1+immediate,target)
+  }
+
   /**
    * Slice out a subsequence of bytes from a given sequence.
    * If the requested subsequence overflows available memory,

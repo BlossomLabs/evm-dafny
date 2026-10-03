@@ -20,41 +20,25 @@ module EvmFork {
     import opened Opcode
     import opened Optional
 
-    const GENISIS_BYTECODES : set<u8> := {
-	    // 0s: Stop and Arithmetic Operations
-        STOP,ADD,MUL,SUB,DIV,SDIV,MOD,SMOD,ADDMOD,MULMOD,EXP,SIGNEXTEND,
-	    // 10s: Comparison & Bitwise Logic Operations
-	    LT,GT,SLT,SGT,EQ,ISZERO,AND,OR,XOR,NOT,BYTE,SHL,SHR,SAR,
-	    // 20s: SHA3
-	    KECCAK256,
-	    // 30s: Environment Information
-	    ADDRESS,BALANCE,ORIGIN,CALLER,CALLVALUE,CALLDATALOAD,CALLDATASIZE,CALLDATACOPY,
-        CODESIZE,CODECOPY,GASPRICE,EXTCODESIZE,EXTCODECOPY,RETURNDATASIZE,RETURNDATACOPY,
-        EXTCODEHASH,
-	    // 40s: Block Information
-	    BLOCKHASH,COINBASE,TIMESTAMP,NUMBER,DIFFICULTY,GASLIMIT,CHAINID,SELFBALANCE,
-	    // 50s: Stack, Memory Storage and Flow Operations
-	    POP,MLOAD,MSTORE,MSTORE8,SLOAD,SSTORE,JUMP,JUMPI,PC,MSIZE,GAS,JUMPDEST,
-	    // 60s & 70s: Push Operations
-	    PUSH1,PUSH2,PUSH3,PUSH4,PUSH5,PUSH6,PUSH7,PUSH8,PUSH9,PUSH10,PUSH11,
-        PUSH12,PUSH13,PUSH14,PUSH15,PUSH16,PUSH17,PUSH18,PUSH19,PUSH20,PUSH21,
-	    PUSH22,PUSH23,PUSH24,PUSH25,PUSH26,PUSH27,PUSH28,PUSH29,PUSH30,PUSH31,
-	    PUSH32,
-	    // 80s: Duplication Operations
-	    DUP1,DUP2,DUP3,DUP4,DUP5,DUP6,DUP7,DUP8,DUP9,DUP10,DUP11,DUP12,DUP13,
-	    DUP14,DUP15,DUP16,
-	    // 90s: Exchange Operations
-	    SWAP1,SWAP2,SWAP3,SWAP4,SWAP5,SWAP6,SWAP7,SWAP8,SWAP9,SWAP10,SWAP11,
-	    SWAP12,SWAP13,SWAP14,SWAP15,SWAP16,
-	    // a0s: Logging Operations
-	    LOG0,LOG1,LOG2,LOG3,LOG4,
-        // e0s
-        EOF,
-	    // f0s: System operations
-	    CREATE,CALL,CALLCODE,RETURN,
-	    DELEGATECALL,CREATE2,STATICCALL,
-	    REVERT,INVALID,SELFDESTRUCT
-    }
+    const GENISIS_BYTECODES : set<u8> :=
+      {STOP,ADD,MUL,SUB,DIV,SDIV,MOD,SMOD}
+      + {ADDMOD,MULMOD,EXP,SIGNEXTEND,LT,GT,SLT,SGT}
+      + {EQ,ISZERO,AND,OR,XOR,NOT,BYTE,SHL}
+      + {SHR,SAR,KECCAK256,ADDRESS,BALANCE,ORIGIN,CALLER,CALLVALUE}
+      + {CALLDATALOAD,CALLDATASIZE,CALLDATACOPY,CODESIZE,CODECOPY,GASPRICE,EXTCODESIZE,EXTCODECOPY}
+      + {RETURNDATASIZE,RETURNDATACOPY,EXTCODEHASH,BLOCKHASH,COINBASE,TIMESTAMP,NUMBER,DIFFICULTY}
+      + {GASLIMIT,CHAINID,SELFBALANCE,POP,MLOAD,MSTORE,MSTORE8,SLOAD}
+      + {SSTORE,JUMP,JUMPI,PC,MSIZE,GAS,JUMPDEST,PUSH1}
+      + {PUSH2,PUSH3,PUSH4,PUSH5,PUSH6,PUSH7,PUSH8,PUSH9}
+      + {PUSH10,PUSH11,PUSH12,PUSH13,PUSH14,PUSH15,PUSH16,PUSH17}
+      + {PUSH18,PUSH19,PUSH20,PUSH21,PUSH22,PUSH23,PUSH24,PUSH25}
+      + {PUSH26,PUSH27,PUSH28,PUSH29,PUSH30,PUSH31,PUSH32,DUP1}
+      + {DUP2,DUP3,DUP4,DUP5,DUP6,DUP7,DUP8,DUP9}
+      + {DUP10,DUP11,DUP12,DUP13,DUP14,DUP15,DUP16,SWAP1}
+      + {SWAP2,SWAP3,SWAP4,SWAP5,SWAP6,SWAP7,SWAP8,SWAP9}
+      + {SWAP10,SWAP11,SWAP12,SWAP13,SWAP14,SWAP15,SWAP16,LOG0}
+      + {LOG1,LOG2,LOG3,LOG4,EOF,CREATE,CALL,CALLCODE}
+      + {RETURN,DELEGATECALL,CREATE2,STATICCALL,REVERT,INVALID,SELFDESTRUCT}
 
     // ===================================================================
     // EIPS
@@ -134,27 +118,43 @@ module EvmFork {
     // ===================================================================
     // Lemmas
     // ===================================================================
-    lemma {:verify false} BerlinFacts()
-    ensures BASEFEE !in BERLIN_BYTECODES
-    {
 
+    lemma EipSet(eips: seq<nat>, codes: set<u8>)
+      ensures EipBytecodes(eips,codes) == codes
+        + (if 1153 in eips then {TLOAD,TSTORE} else {})
+        + (if 3198 in eips then {BASEFEE} else {})
+        + (if 3855 in eips then {PUSH0} else {})
+        + (if 5656 in eips then {MCOPY} else {})
+    {
+      if |eips| > 0 {
+        match eips[0]
+        case 1153 => EipSet(eips[1..],codes+{TLOAD,TSTORE});
+        case 3198 => EipSet(eips[1..],codes+{BASEFEE});
+        case 3855 => EipSet(eips[1..],codes+{PUSH0});
+        case 5656 => EipSet(eips[1..],codes+{MCOPY});
+        case _ => EipSet(eips[1..],codes);
+      }
     }
 
-    lemma {:verify false} LondonFacts()
+    lemma BerlinFacts()
+    ensures BASEFEE !in BERLIN_BYTECODES
+    { EipSet(BERLIN_EIPS,GENISIS_BYTECODES); }
+
+    lemma LondonFacts()
     ensures BASEFEE in LONDON_BYTECODES
     {
-
+        EipSet(LONDON_EIPS,GENISIS_BYTECODES);
     }
 
-    lemma {:verify false} ShanghaiFacts()
+    lemma ShanghaiFacts()
       ensures {PUSH0,BASEFEE} <= SHANGHAI_BYTECODES
     {
-
+        EipSet(SHANGHAI_EIPS,GENISIS_BYTECODES);
     }    
 
-    lemma {:verify false} CancunFacts()
+    lemma CancunFacts()
       ensures {MCOPY,TLOAD,TSTORE} <= CANCUN_BYTECODES
     {
-
+        EipSet(CANCUN_EIPS,GENISIS_BYTECODES);
     } 
 }
