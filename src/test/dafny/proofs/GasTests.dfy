@@ -1,7 +1,9 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 // Some tests related to gas.
 include "../../../dafny/evm.dfy"
 
 module GasTests {
+    import PrecompiledCrypto
     import opened Int
     import EVM
     import EvmFork
@@ -16,7 +18,7 @@ module GasTests {
         // Assuption required because Z3 cannot figure this out!
         assume {:axiom} {GAS} <= EvmFork.BERLIN_BYTECODES;
         // Simple contract containing only one instruction.
-        var vm := EVM.Init(gas := INITGAS, code := [GAS]);
+        var vm := EVM.Init(gas := INITGAS, code := [GAS], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         vm := EVM.Execute(vm);
         // Sanity check output!
         assert vm.Peek(0) == ((INITGAS - Gas.G_BASE) as u256);

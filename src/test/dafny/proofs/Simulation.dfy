@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 /*
  * Copyright 2022 ConsenSys Software Inc.
  *
@@ -18,6 +19,7 @@ include "../../../dafny/evm.dfy"
  *  Provide some simple simulation checks.
  */
 module SimulationChecks {
+    import PrecompiledCrypto
 
     import opened Int
     import opened EVM
@@ -57,13 +59,13 @@ module SimulationChecks {
         // Assumption required because Z3 cannot prove this!
         assume {:axiom} PUSH1 in EvmFork.BERLIN_BYTECODES;
         // Initialise EVM #1
-        var vm1 := EVM.Init(gas:=g, code:=[PUSH1, 1, PUSH1, 0x2, ADD, POP, STOP]);
+        var vm1 := EVM.Init(gas:=g, code:=[PUSH1, 1, PUSH1, 0x2, ADD, POP, STOP], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         //  EVM #2, no code associated with.
         //  to be able to satisfy the pre-condition of Push1 etc we still need
         //  some bytecode of the same size to be able to advance `pc` (this check is part of
         //  Push1 and others)
-        var vm2 := EVM.Init(g);
+        var vm2 := EVM.Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         //  First check: initial states are equiv.
         assert equiv(vm1, vm2);
@@ -105,13 +107,13 @@ module SimulationChecks {
 
         //  EVM #1
         // Initialise EVM #1
-        var vm1 := EVM.Init(gas:=g, code:=[PUSH1, a, PUSH1, b, ADD, POP, STOP]);
+        var vm1 := EVM.Init(gas:=g, code:=[PUSH1, a, PUSH1, b, ADD, POP, STOP], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         //  EVM #2, no code associated with.
         //  to be able to satisfy the pre-condition of Push1 etc we still need
         //  some bytecode of the same size to be able to advance `pc` (this check is part of
         //  Push1 and others)
-        var vm2 := EVM.Init(g);
+        var vm2 := EVM.Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         //  First check.
         assert equiv(vm1, vm2);
@@ -188,7 +190,7 @@ module SimulationChecks {
                 JUMPDEST,       // 17
                 STOP            // 18
             ]
-        );
+                      , precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         //  Snapshot of code. As it is a variable it may be modified
         //  byt the program and we want to show that it is constant.
