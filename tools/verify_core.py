@@ -4,7 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENTRIES = ['src/dafny/pure-steps.dfy','src/dafny/checked-add.dfy',
-           'src/dafny/boundaries.dfy','src/dafny/trace-proof.dfy']
+           'src/dafny/boundaries.dfy','src/dafny/trace-proof.dfy',
+           'src/dafny/shift-facts.dfy','src/dafny/word-store.dfy']
 
 # Retain existing files' upstream formatting; check newly introduced sources.
 FORMAT_SOURCES = [*ENTRIES, 'src/dafny/execution.dfy',
