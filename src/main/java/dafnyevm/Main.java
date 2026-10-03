@@ -87,7 +87,7 @@ public class Main {
 		// Extract transaction sender.
 		BigInteger sender = Hex.toBigInt(cmd.getOptionValue("sender", "0xabc"));
 		// Extract transaction receiver.
-		BigInteger receiver = Hex.toBigInt(cmd.getOptionValue("receiver", null));
+		BigInteger receiver = Hex.toBigInt(cmd.getOptionValue("receiver", (String) null));
 		// Extract call value (if applicable)
 		BigInteger value = Hex.toBigInt(cmd.getOptionValue("value", "0x0"));
 		// Extract call data (if applicable)
