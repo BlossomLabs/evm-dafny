@@ -35,19 +35,19 @@ module EVM {
      *  @param  gas     The gas loaded in this EVM.
      *  @returns        An ready-to-use EVM.
      */
-    function Init(gas: nat, fork : Fork := BERLIN, stk: seq<u256> := [], code: seq<u8> := []) : (st:ExecutingState)
+    function Init(gas: nat, precompiled: Precompiled.T, fork : Fork := BERLIN, stk: seq<u256> := [], code: seq<u8> := []) : (st:ExecutingState)
     requires |code| <= Code.MAX_CODE_SIZE
     requires |stk| <= 1024
     {
         var tx := Context.Create(0,0,0,0,[],true,0,Context.Block.Info(0,0,0,0,0,0,0));
-        Create(fork, tx, map[0:=WorldState.DefaultAccount()], gas, code, Precompiled.DEFAULT, stk)
+        Create(fork, tx, map[0:=WorldState.DefaultAccount()], gas, code, precompiled, stk)
     }
 
     /**
      * Create a fresh EVM to execute a given sequence of bytecode instructions.
      * The EVM is initialised with an empty stack and empty local memory.
      */
-    function Create(fork: Fork, context: Context.T, world: map<u160,WorldState.Account>, gas: nat, code: seq<u8>, precompiled: Precompiled.T := Precompiled.DEFAULT, st: seq<u256> := []) : ExecutingState
+    function Create(fork: Fork, context: Context.T, world: map<u160,WorldState.Account>, gas: nat, code: seq<u8>, precompiled: Precompiled.T, st: seq<u256> := []) : ExecutingState
     // Code to executed cannot exceed maximum limit.
     requires |code| <= Code.MAX_CODE_SIZE
     requires |st| <= Stack.CAPACITY
