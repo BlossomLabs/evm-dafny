@@ -293,7 +293,9 @@ module Int {
 
     // Sanity check that going to/from bytes gives identical result.
     lemma LemmaFromToBytes(v: nat)
-    ensures FromBytes(ToBytes(v)) == v {}
+    ensures FromBytes(ToBytes(v)) == v {
+        if v >= 256 { LemmaFromToBytes(v/256); }
+    }
 
     // Sanity check for the other direction.  Observe that we require an
     // additional constraint because, in fact, in general the lemma does not
@@ -318,7 +320,9 @@ module Int {
     // will not be larger (though could be the same length).
     lemma LemmaLengthToBytes(n: nat, m: nat)
     requires n <= m
-    ensures |ToBytes(n)| <= |ToBytes(m)| {}
+    ensures |ToBytes(n)| <= |ToBytes(m)| {
+        if n >= 256 { LemmaLengthToBytes(n/256,m/256); }
+    }
 
     // Lemma to help connect the expected byte length of a natural number
     // through coecion.  Specifically, converting a byte sequence into a number
@@ -602,8 +606,9 @@ module U256 {
     import U128
 
     /** An axiom stating that a bv256 converted as a nat is bounded by 2^256. */
-    lemma {:axiom} as_bv256_as_u256(v: bv256)
+    lemma as_bv256_as_u256(v: bv256)
         ensures v as nat < TWO_256
+    {}
 
     function Shl(lhs: u256, rhs: u256) : u256
     {

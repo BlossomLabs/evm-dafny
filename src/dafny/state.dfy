@@ -674,10 +674,7 @@ module EvmState {
         predicate IsInstructionBoundary(pc: int)
         requires this.EXECUTING? {
             var len := Code.Size(evm.code) as nat;
-            // FIXME: this is not sufficient to establish that the given
-            // instruction offset actually lies on an instruction boundary.  See
-            // #242.
-            pc >= 0 && pc < len
+            pc >= 0 && pc < len && Code.IsInstructionStart(evm.code,0,pc as nat)
         }
 
         /**
