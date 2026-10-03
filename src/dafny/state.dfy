@@ -86,7 +86,7 @@ module EvmState {
     // of the EVM though.
     const EVM_WITNESS : Raw := EVM(BERLIN,
             Context.DEFAULT,
-            Precompiled.DEFAULT,
+            Precompiled.WITNESS,
             WorldState.Create(map[0:=WorldState.DefaultAccount()]),
             EmptyEvmStack,
             Memory.Create(),
