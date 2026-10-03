@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 include "../../../dafny/evm.dfy"
 include "../../../dafny/core/fork.dfy"
 
@@ -33,7 +34,7 @@ module Test {
         // Assuption required because Z3 cannot figure this out!
         assume {:axiom} {PUSH1,MSTORE,RETURN} <= EvmFork.BERLIN_BYTECODES;
         // Initialise Bytecode
-        var vm := EVM.Init(
+        var vm := EVM.Init(precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0),
           gas := INITGAS,
           code := [
             PUSH1, x,
@@ -68,7 +69,7 @@ module Test {
     method {:verify false} Test_IR_01(x: u8)
     {
         // Initialise Bytecode
-        var vm := EVM.Init(gas := INITGAS);
+        var vm := EVM.Init(gas := INITGAS, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         //
         vm := Bytecode.Push1(vm,x);
         vm := Bytecode.Push1(vm,0);
@@ -85,7 +86,7 @@ module Test {
       ensures z == (x as u16) + (y as u16)
     {
         var xpy := (x as u256) + (y as u256);
-        var vm0 := EVM.Init(gas := INITGAS);
+        var vm0 := EVM.Init(gas := INITGAS, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         //
         var vm1 := Bytecode.Push1(vm0,x);
         var vm2 := Bytecode.Push1(vm1,y);
@@ -110,7 +111,7 @@ module Test {
     requires x >= y
     ensures z <= x
     {
-        var vm := EVM.Init(gas := INITGAS);
+        var vm := EVM.Init(gas := INITGAS, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         //
         vm := Bytecode.Push1(vm,y);
         vm := Bytecode.Push1(vm,x);
@@ -132,7 +133,7 @@ module Test {
     requires x >= y
     ensures z <= x
     {
-        var vm0 := EVM.Init(gas := INITGAS);
+        var vm0 := EVM.Init(gas := INITGAS, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         //
         var vm1 := Bytecode.Push1(vm0,y);
         var vm2 := Bytecode.Push1(vm1,x);
@@ -159,7 +160,7 @@ module Test {
         ensures !revert <==> (z <= x)
     {
         // var tx := Context.Create(0xabc,0xdef,0,[],0);
-        var vm := EVM.Init(
+        var vm := EVM.Init(precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0),
             gas := INITGAS,
             code := [
                 PUSH1, x,
