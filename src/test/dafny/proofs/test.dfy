@@ -8,6 +8,7 @@ import opened Opcode
 /**
  */
 module Test {
+    import PrecompiledCrypto
 
     import opened Int
     import opened Opcode

@@ -22,6 +22,7 @@ include "../utils.dfy"
  *  like `Push1` do not consume gas.
  */
 module Test10 {
+    import PrecompiledCrypto
 
     import opened Int
     import opened Bytecode

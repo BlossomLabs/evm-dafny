@@ -21,6 +21,7 @@ include "../../../dafny/evm.dfy"
  *  like `Push1` do not consume gas.
  */
 module Optimisations {
+    import PrecompiledCrypto
 
     import opened Int
     import opened Bytecode

@@ -21,6 +21,7 @@ include "../../../dafny/evm.dfy"
  *  should ensure that the EVM does not stop because an out-of-gas exception.
  */
 module Test10Gas {
+    import PrecompiledCrypto
 
     import opened Int
     import opened Bytecode
@@ -37,7 +38,7 @@ module Test10Gas {
         requires g >= 2*G_VERYLOW + 2*G_LOW
     {
         // Initialise VM with g  gas unit.
-        var vm := Init(g);
+        var vm := Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         var a: u8 := 0x01;
         var b: u8 := 0x02;
 
@@ -65,7 +66,7 @@ module Test10Gas {
         requires g >= c as nat * (3 * G_VERYLOW + G_BASE)
     {
         // Initialise VM
-        var vm := Init(g);
+        var vm := Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         var a: u8 := 0x01;
         var b : u8 := 0x02;
         var count: u8 := c;
@@ -100,7 +101,7 @@ module Test10Gas {
         var b : u8 := 0x02;
 
         // Initialise Bytecode
-        var vm := Init(g);
+        var vm := Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         vm := Push1(vm, c).UseGas(G_VERYLOW);
         ghost var count : u256 := c as u256;
@@ -177,7 +178,7 @@ module Test10Gas {
         requires g >= G_BASE + 4 * G_VERYLOW + c as nat * (2 * G_BASE + 9 * G_VERYLOW)
     {
         // Initialise Bytecode
-        var vm := Init(g);
+        var vm := Init(g, precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         var a: u8 := 0x01;
         var b : u8 := 0x02;

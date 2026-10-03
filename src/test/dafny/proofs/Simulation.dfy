@@ -19,6 +19,7 @@ include "../../../dafny/evm.dfy"
  *  Provide some simple simulation checks.
  */
 module SimulationChecks {
+    import PrecompiledCrypto
 
     import opened Int
     import opened EVM

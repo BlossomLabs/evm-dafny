@@ -3,6 +3,7 @@ include "../../../dafny/core/precompiled-crypto.dfy"
 include "../../../dafny/evm.dfy"
 
 module GasTests {
+    import PrecompiledCrypto
     import opened Int
     import EVM
     import EvmFork

@@ -4,6 +4,7 @@ include "../../../dafny/evm.dfy"
 include "../utils.dfy"
 
 module CallExamples {
+    import PrecompiledCrypto
     import opened Int
     import opened Opcode
     import opened Memory
