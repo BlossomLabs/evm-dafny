@@ -104,7 +104,7 @@ public class DafnyEvm {
 	/**
 	 * Native implementation of precompiled contracts.
 	 */
-    private Precompiled.T NATIVE_PRECOMPILES = Precompiled.T.create(Precompiles::ecdsaRecover,
+    private Precompiled.T NATIVE_PRECOMPILES = PrecompiledCrypto.__default.Backend(Precompiles::ecdsaRecover,
             Precompiles::sha256, Precompiles::ripEmd160, Precompiles::blake2f, Precompiles::sha3);
 	/**
 	 * World state to use for this call.
