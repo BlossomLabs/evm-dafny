@@ -15,6 +15,7 @@ include "int.dfy"
 include "arrays.dfy"
 
 module ByteUtils {
+  import U256
     import opened Int
     import Arrays
 
@@ -88,6 +89,14 @@ module ByteUtils {
     /**
      * Write a byte to a given address in Memory.
      */
+  lemma FullWordValue(bytes:seq<u8>,offset:nat)
+    requires offset+32 <= |bytes|
+    ensures Int.FromBytes(bytes[offset..offset+32]) == ReadUint256(bytes,offset) as nat
+  {
+    U256.ReadValue(bytes,offset);
+    assert ReadUint256(bytes,offset) == U256.Read(bytes,offset);
+  }
+
     function WriteUint8(mem:seq<u8>, address:nat, val:u8) : (mem':seq<u8>)
     requires address < |mem|
     ensures Arrays.EqualsExcept(mem,mem',address,1){

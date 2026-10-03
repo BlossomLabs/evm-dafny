@@ -12,12 +12,12 @@
  * under the License.
  */
 
-include "../../../libs/DafnyCrypto/src/dafny/util/math.dfy"
+include "arithmetic.dfy"
 include "../../../libs/DafnyCrypto/src/dafny/util/option.dfy"
 
 module Int {
     import opened Optional
-    import MathUtils
+    import MathUtils = EvmArithmetic
 
     const TWO_1   : int := 0x0_02
     const TWO_2   : int := 0x0_04
@@ -221,9 +221,8 @@ module Int {
     // always divides *towards* zero.
     function Div(lhs: int, rhs: int) : int
     requires rhs != 0 {
-        if lhs >= 0 then lhs / rhs
-        else
-            -((-lhs) / rhs)
+    var q := (MathUtils.Abs(lhs) / MathUtils.Abs(rhs)) as int;
+    if (lhs < 0) != (rhs < 0) then -q else q
     }
 
     // This provides a non-Euclidean Remainder operator and is necessary
@@ -231,12 +230,23 @@ module Int {
     // language) supports Euclidean division.  Observe that this is a
     // true Remainder operator, and not a modulus operator.  For
     // emxaple, this means the result can be negative.
-    function Rem(lhs: int, rhs: int) : int
-    requires rhs != 0 {
-        if lhs >= 0 then (lhs % rhs)
-        else
-            var d := -((-lhs) / rhs);
-            lhs - (d * rhs)
+    function Rem(lhs: int, rhs: int) : (r:int)
+    requires rhs != 0
+    ensures -(MathUtils.Abs(rhs) as int) < r < MathUtils.Abs(rhs)
+    ensures lhs >= 0 ==> r >= 0
+    ensures lhs <= 0 ==> r <= 0
+  {
+    var d := MathUtils.Abs(rhs);
+    if lhs >= 0 then lhs % d else -((-lhs) % d)
+  }
+
+  lemma RemainderMatchesDivision(lhs:int,rhs:int)
+    requires rhs != 0
+    ensures Rem(lhs,rhs) == lhs - Div(lhs,rhs)*rhs
+  {
+    var a := MathUtils.Abs(lhs);
+    var b := MathUtils.Abs(rhs);
+    assert a == (a/b)*b+a%b;
      }
 
     // Convert an arbitrary sized unsigned integer into a sequence of 1 or more
@@ -291,6 +301,42 @@ module Int {
         }
     }
 
+  lemma LeadingNonzero(bytes:seq<u8>)
+    requires |bytes| > 0 && bytes[0] != 0
+    ensures FromBytes(bytes) > 0
+  {
+    if |bytes| > 1 { LeadingNonzero(bytes[..|bytes|-1]); }
+  }
+
+  function BytePower(n:nat):nat
+    ensures BytePower(n) > 0
+    decreases n
+  { if n == 0 then 1 else BytePower(n-1)*256 }
+
+  lemma FromBytesConcat(left:seq<u8>,right:seq<u8>)
+    ensures FromBytes(left+right) == FromBytes(left)*BytePower(|right|)+FromBytes(right)
+    decreases |right|
+  {
+    if |right| > 0 {
+      var n := |right|-1;
+      FromBytesConcat(left,right[..n]);
+      assert (left+right)[..|left+right|-1] == left+right[..n];
+      assert (left+right)[|left+right|-1] == right[n];
+      LemmaFromBytes(left+right,|left+right|-1);
+      LemmaFromBytes(right,n);
+      assert FromBytes(left+right) == FromBytes(left+right[..n])*256+right[n] as nat;
+      assert FromBytes(right) == FromBytes(right[..n])*256+right[n] as nat;
+      assert BytePower(|right|) == BytePower(n)*256;
+      assert (FromBytes(left)*BytePower(n)+FromBytes(right[..n]))*256 == FromBytes(left)*(BytePower(n)*256)+FromBytes(right[..n])*256;
+      assert FromBytes(left+right) == FromBytes(left)*BytePower(|right|)+FromBytes(right);
+    } else {
+      assert right == [];
+      assert left+right == left;
+      assert BytePower(|right|) == 1;
+      assert FromBytes(right) == 0;
+    }
+  }
+
     // Sanity check that going to/from bytes gives identical result.
     lemma LemmaFromToBytes(v: nat)
     ensures FromBytes(ToBytes(v)) == v {
@@ -302,7 +348,7 @@ module Int {
     // hold. For example FromBytes([0,0]) == 0 but ToBytes(0) == [0].
     // Therefore, the additional constraint just prevents unnecessary leading
     // zeros.
-    lemma {:verify false} LemmaToFromBytes(bytes:seq<u8>)
+    lemma LemmaToFromBytes(bytes:seq<u8>)
     requires |bytes| > 0 && (|bytes| == 1 || bytes[0] != 0)
     ensures ToBytes(FromBytes(bytes)) == bytes 
     {
@@ -310,6 +356,11 @@ module Int {
         if |bytes| > 1 {
             var tail := bytes[..n];
             LemmaToFromBytes(tail);
+      LeadingNonzero(tail);
+      assert FromBytes(tail) > 0;
+      assert FromBytes(bytes) / 256 == FromBytes(tail);
+      assert FromBytes(bytes) % 256 == bytes[n] as nat;
+      assert ToBytes(FromBytes(bytes)) == ToBytes(FromBytes(tail)) + [bytes[n]];
         } else {
             assert ToBytes(FromBytes(bytes)) == bytes;
         }
@@ -418,6 +469,19 @@ module U16 {
         [high,low]
     }
 
+  lemma {:fuel Int.BytePower, 18} {:fuel Int.FromBytes, 4} BytesValue(v:u16)
+    ensures Int.FromBytes(ToBytes(v)) == v as nat
+  {
+    assert Int.FromBytes(ToBytes(v)) == (v / (TWO_8 as u16)) as nat*256+(v % (TWO_8 as u16)) as nat;
+  }
+
+  lemma {:fuel Int.FromBytes, 4} {:fuel Int.BytePower, 18} ReadValue(bytes:seq<u8>,offset:nat)
+    requires offset+2 <= |bytes|
+    ensures Int.FromBytes(bytes[offset..offset+2]) == Read(bytes,offset) as nat
+  {
+    assert bytes[offset..offset+2] == [bytes[offset],bytes[offset+1]];
+  }
+
     function Read(bytes: seq<u8>, address:nat) : u16
     requires (address+1) < |bytes| {
         var b1 := bytes[address] as u16;
@@ -472,6 +536,28 @@ module U32 {
         var low := (v % (TWO_16 as u32)) as u16;
         var high := (v / (TWO_16 as u32)) as u16;
         U16.ToBytes(high) + U16.ToBytes(low)
+  }
+
+  lemma {:fuel Int.BytePower, 18} BytesValue(v:u32)
+    ensures Int.FromBytes(ToBytes(v)) == v as nat
+  {
+    var hi := (v / (TWO_16 as u32)) as u16;
+    var lo := (v % (TWO_16 as u32)) as u16;
+    U16.BytesValue(hi);
+    U16.BytesValue(lo);
+    Int.FromBytesConcat(U16.ToBytes(hi),U16.ToBytes(lo));
+    assert Int.BytePower(2) == TWO_16;
+  }
+
+  lemma {:fuel Int.FromBytes, 4} {:fuel Int.BytePower, 18} ReadValue(bytes:seq<u8>,offset:nat)
+    requires offset+4 <= |bytes|
+    ensures Int.FromBytes(bytes[offset..offset+4]) == Read(bytes,offset) as nat
+  {
+    U16.ReadValue(bytes,offset);
+    U16.ReadValue(bytes,offset+2);
+    assert bytes[offset..offset+4] == bytes[offset..offset+2]+bytes[offset+2..offset+4];
+    Int.FromBytesConcat(bytes[offset..offset+2],bytes[offset+2..offset+4]);
+    assert Int.BytePower(2) == TWO_16;
     }
 
     function Read(bytes: seq<u8>, address:nat) : u32
@@ -530,6 +616,28 @@ module U64 {
         U32.ToBytes(high) + U32.ToBytes(low)
     }
 
+  lemma {:fuel Int.BytePower, 18} BytesValue(v:u64)
+    ensures Int.FromBytes(ToBytes(v)) == v as nat
+  {
+    var hi := (v / (TWO_32 as u64)) as u32;
+    var lo := (v % (TWO_32 as u64)) as u32;
+    U32.BytesValue(hi);
+    U32.BytesValue(lo);
+    Int.FromBytesConcat(U32.ToBytes(hi),U32.ToBytes(lo));
+    assert Int.BytePower(4) == TWO_32;
+  }
+
+  lemma {:fuel Int.FromBytes, 4} {:fuel Int.BytePower, 18} ReadValue(bytes:seq<u8>,offset:nat)
+    requires offset+8 <= |bytes|
+    ensures Int.FromBytes(bytes[offset..offset+8]) == Read(bytes,offset) as nat
+  {
+    U32.ReadValue(bytes,offset);
+    U32.ReadValue(bytes,offset+4);
+    assert bytes[offset..offset+8] == bytes[offset..offset+4]+bytes[offset+4..offset+8];
+    Int.FromBytesConcat(bytes[offset..offset+4],bytes[offset+4..offset+8]);
+    assert Int.BytePower(4) == TWO_32;
+  }
+
     function Read(bytes: seq<u8>, address:nat) : u64
     requires (address+7) < |bytes| {
         var b1 := U32.Read(bytes, address) as u64;
@@ -586,6 +694,28 @@ module U128 {
         U64.ToBytes(high) + U64.ToBytes(low)
     }
 
+  lemma {:fuel Int.BytePower, 18} BytesValue(v:u128)
+    ensures Int.FromBytes(ToBytes(v)) == v as nat
+  {
+    var hi := (v / (TWO_64 as u128)) as u64;
+    var lo := (v % (TWO_64 as u128)) as u64;
+    U64.BytesValue(hi);
+    U64.BytesValue(lo);
+    Int.FromBytesConcat(U64.ToBytes(hi),U64.ToBytes(lo));
+    assert Int.BytePower(8) == TWO_64;
+  }
+
+  lemma {:fuel Int.FromBytes, 4} {:fuel Int.BytePower, 18} ReadValue(bytes:seq<u8>,offset:nat)
+    requires offset+16 <= |bytes|
+    ensures Int.FromBytes(bytes[offset..offset+16]) == Read(bytes,offset) as nat
+  {
+    U64.ReadValue(bytes,offset);
+    U64.ReadValue(bytes,offset+8);
+    assert bytes[offset..offset+16] == bytes[offset..offset+8]+bytes[offset+8..offset+16];
+    Int.FromBytesConcat(bytes[offset..offset+8],bytes[offset+8..offset+16]);
+    assert Int.BytePower(8) == TWO_64;
+  }
+
     function Read(bytes: seq<u8>, address:nat) : u128
     requires (address+15) < |bytes| {
         var b1 := U64.Read(bytes, address) as u128;
@@ -610,21 +740,25 @@ module U256 {
         ensures v as nat < TWO_256
     {}
 
+    function Add(lhs:u256,rhs:u256):u256 { ((lhs as nat + rhs as nat) % TWO_256) as u256 }
+  function Mul(lhs:u256,rhs:u256):u256 { ((lhs as nat * rhs as nat) % TWO_256) as u256 }
+  opaque function And(lhs:u256,rhs:u256):u256 { ((lhs as bv256) & (rhs as bv256)) as u256 }
+  opaque function Or(lhs:u256,rhs:u256):u256 { ((lhs as bv256) | (rhs as bv256)) as u256 }
+  function Xor(lhs:u256,rhs:u256):u256 { ((lhs as bv256) ^ (rhs as bv256)) as u256 }
+
     function Shl(lhs: u256, rhs: u256) : u256
     {
         if rhs >= 256 then 0
         else
             var p := MathUtils.Pow(2,rhs as nat);
-            var n := (lhs as nat) * p;
-            (n % TWO_256) as u256
+    ((lhs as nat) * p % TWO_256) as u256
     }
 
     function Shr(lhs: u256, rhs: u256) : u256 {
         if rhs >= 256 then 0
         else
             var p := MathUtils.Pow(2, rhs as nat);
-            var n := (lhs as nat) / p;
-            n as u256
+    ((lhs as nat) / p) as u256
     }
 
     /**
@@ -671,6 +805,28 @@ module U256 {
         var w32 :=  U64.NthUint32(w64,(k % 8) / 4);
         var w16 :=  U32.NthUint16(w32,(k % 4) / 2);
         U16.NthUint8(w16,k%2)
+  }
+
+  lemma {:fuel Int.BytePower, 18} BytesValue(v:u256)
+    ensures Int.FromBytes(ToBytes(v)) == v as nat
+  {
+    var hi := (v / (TWO_128 as u256)) as u128;
+    var lo := (v % (TWO_128 as u256)) as u128;
+    U128.BytesValue(hi);
+    U128.BytesValue(lo);
+    Int.FromBytesConcat(U128.ToBytes(hi),U128.ToBytes(lo));
+    assert Int.BytePower(16) == TWO_128;
+  }
+
+  lemma {:fuel Int.FromBytes, 4} {:fuel Int.BytePower, 18} ReadValue(bytes:seq<u8>,offset:nat)
+    requires offset+32 <= |bytes|
+    ensures Int.FromBytes(bytes[offset..offset+32]) == Read(bytes,offset) as nat
+  {
+    U128.ReadValue(bytes,offset);
+    U128.ReadValue(bytes,offset+16);
+    assert bytes[offset..offset+32] == bytes[offset..offset+16]+bytes[offset+16..offset+32];
+    Int.FromBytesConcat(bytes[offset..offset+16],bytes[offset+16..offset+32]);
+    assert Int.BytePower(16) == TWO_128;
     }
 
     function Read(bytes: seq<u8>, address:nat) : u256

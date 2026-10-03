@@ -51,7 +51,7 @@ module Bytecode {
         then
             var lhs := st.Peek(0) as int;
             var rhs := st.Peek(1) as int;
-            var res := (lhs + rhs) % TWO_256;
+            var res := U256.Add(lhs as u256,rhs as u256);
             st.Pop(2).Push(res as u256).Next()
         else
             ERROR(STACK_UNDERFLOW)
@@ -69,7 +69,7 @@ module Bytecode {
         then
             var lhs := st.Peek(0) as int;
             var rhs := st.Peek(1) as int;
-            var res := (lhs * rhs) % TWO_256;
+            var res := U256.Mul(lhs as u256,rhs as u256);
             st.Pop(2).Push(res as u256).Next()
         else
             ERROR(STACK_UNDERFLOW)
@@ -455,7 +455,7 @@ module Bytecode {
         then
             var lhs := st.Peek(0) as bv256;
             var rhs := st.Peek(1) as bv256;
-            var res := (lhs & rhs) as u256;
+            var res := U256.And(lhs as u256,rhs as u256);
             st.Pop(2).Push(res).Next()
         else
             ERROR(STACK_UNDERFLOW)
@@ -475,7 +475,7 @@ module Bytecode {
             var lhs := st.Peek(0) as bv256;
             var rhs := st.Peek(1) as bv256;
             U256.as_bv256_as_u256(lhs | rhs);
-            var res := (lhs | rhs) as u256;
+            var res := U256.Or(lhs as u256,rhs as u256);
             st.Pop(2).Push(res).Next()
         else
             ERROR(STACK_UNDERFLOW)
@@ -484,7 +484,7 @@ module Bytecode {
     /**
      * Bitwise XOR operation.
      */
-    function {:verify false} Xor(st: ExecutingState): (st': State)
+    function Xor(st: ExecutingState): (st': State)
     ensures st'.EXECUTING? || st' == ERROR(STACK_UNDERFLOW)
     ensures st'.EXECUTING? <==> st.Operands() >= 2
     ensures st'.EXECUTING? ==> st'.Operands() == st.Operands() - 1
@@ -495,7 +495,7 @@ module Bytecode {
             var lhs := st.Peek(0) as bv256;
             var rhs := st.Peek(1) as bv256;
             U256.as_bv256_as_u256(lhs ^ rhs);
-            var res := (lhs ^ rhs) as u256;
+            var res := U256.Xor(lhs as u256,rhs as u256);
             st.Pop(2).Push(res).Next()
         else
             ERROR(STACK_UNDERFLOW)
