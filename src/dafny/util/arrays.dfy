@@ -61,6 +61,8 @@ module Arrays {
     requires (start+|src|) <= |dst|
     // Resulting array unchanged in size
     ensures |result| == |dst|
+    ensures result == dst[..start]+src+dst[start+|src|..]
+    ensures forall i | 0 <= i < |dst| :: result[i] == (if start <= i < start+|src| then src[i-start] else dst[i])
     // Affected region matches source array
     ensures src == result[start .. (start+|src|)]
     // Everything unchanged outside affected region
