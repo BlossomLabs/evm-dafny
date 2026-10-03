@@ -193,7 +193,8 @@ test {
     // Ensure can see stdout
     testLogging.showStandardStreams = true
     // Ensure enough memory
-    jvmArgs '-Xmx2G','-Xss4m'
+    maxHeapSize = '4g'
+    jvmArgs '-Xss4m'
     //
     useJUnitPlatform()
     filter {
