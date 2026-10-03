@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 /*
  * Copyright 2022 ConsenSys Software Inc.
  *
@@ -26,7 +27,7 @@ module ForkTests {
 
     method {:test} berlin_01()
     {
-        var vm := EVM.Init(0, EvmFork.BERLIN, code:=[BASEFEE]);
+        var vm := EVM.Init(0, EvmFork.BERLIN, code:=[BASEFEE], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         EvmFork.BerlinFacts();
         AssertAndExpect(BASEFEE !in EvmFork.BERLIN_BYTECODES);
         vm := EVM.Execute(vm);
@@ -35,7 +36,7 @@ module ForkTests {
 
     method {:test} london_01()
     {
-        var vm := EVM.Init(0, EvmFork.LONDON, code:=[BASEFEE]);
+        var vm := EVM.Init(0, EvmFork.LONDON, code:=[BASEFEE], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         EvmFork.LondonFacts();
         AssertAndExpect(BASEFEE in EvmFork.LONDON_BYTECODES);
         vm := EVM.Execute(vm);

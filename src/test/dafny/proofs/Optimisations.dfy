@@ -1,3 +1,4 @@
+include "../../../dafny/core/precompiled-crypto.dfy"
 /*
  * Copyright 2022 ConsenSys Software Inc.
  *
@@ -55,7 +56,7 @@ module Optimisations {
         /** Minimum gas needed. */
         requires g >= 2 * Gas.G_BASE + Gas.G_VERYLOW
     {
-        var vm := EVM.Init(gas := g, stk := s, code := []);
+        var vm := EVM.Init(gas := g, stk := s, code := [], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
         //  execute 2 POPs
         var vm1 := vm;
         vm1 := Execute(POP, vm1);
@@ -93,7 +94,7 @@ module Optimisations {
         /** Minimum gas needed. */
         requires g >= (n + 1) * Gas.G_BASE + Gas.G_VERYLOW
     {
-        var vm := EVM.Init(gas := g, stk := s, code := []);
+        var vm := EVM.Init(gas := g, stk := s, code := [], precompiled:=PrecompiledCrypto.Backend((data,v,r,s)=>data,data=>data,data=>data,data=>data,data=>0));
 
         //  Execute n + 1 POPs in vm1.
         var vm1 := vm;
