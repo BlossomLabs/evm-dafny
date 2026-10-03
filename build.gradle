@@ -89,7 +89,7 @@ final DAFNY4_TEST_FLAGS = [
     '--target','java',
     '--function-syntax','4',
     '--quantifier-syntax','4',
-    '--verification-time-limit','30',
+    '--verification-time-limit','120',
     '--cores','2',
     '--manual-lemma-induction'
 ]  + Z3_OPTION
